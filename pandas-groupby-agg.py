@@ -27,12 +27,21 @@ print("Here is the dataframe sample.")
 print(df_sample)
 print()
 
-# create groupby-agg dataframe, flatten the multi-index-columns
-df_gb_agg = pd.DataFrame(df_sample.groupby('UnderlyingSymbol').agg({
+# step 1: create groupby-agg dataframe
+df_gb_agg_raw = df_sample.groupby('UnderlyingSymbol').agg({
     'Strike': [len, pd.Series.nunique]
-}).to_records())
-df_gb_agg.columns = [x.replace(', ', '_').replace('(', '').replace(')', '').replace("'", "") for x in df_gb_agg.columns]
+})
 
-print("Here is the groupby-agg sample.")
-print(df_gb_agg)
+# step 2: flatten multi-index-columns into numpy record array
+np_flatten = df_gb_agg_raw.to_records()
+
+# step 3: convert numpy record array back to dataframe
+df_flatten_rawcols = pd.DataFrame(np_flatten)
+
+# step 4: clean column names
+df_gb_agg_clean = df_flatten_rawcols.copy()
+df_gb_agg_clean.columns = [x.replace(', ', '_').replace('(', '').replace(')', '').replace("'", "") for x in df_flatten_rawcols.columns]
+
+print("Here is the clean groupby-agg sample.")
+print(df_gb_agg_clean)
 print()
