@@ -1,5 +1,30 @@
 import pandas as pd
 
+
+def cleanup_df_cols(df):
+    '''
+    Cleanup the columns in dataframe.
+    
+    Dataframe => .groupby().agg() => .to_records() -> pd.DataFrame()
+    
+    Cleanup:
+     * Replace ', '  =>  '_'
+     * Remove '('
+     * Remove ')'
+     * Remove ','
+    '''
+    # save the original columns in dataframe to temporary list
+    ls_original_cols = df.columns
+    
+    # cleanup the column names
+    ls_cleanup_cols = [x.replace(', ', '_').replace('(', '').replace(')', '').replace("'", "") for x in ls_original_cols]
+    
+    # replace columns in dataframe 
+    df.columns = ls_cleanup_cols
+    
+    return df
+
+
 # create sample data using dictionary
 di_sample = {'UnderlyingSymbol': {0: 'FXA', 1: 'FXY', 2: 'FXA', 3: 'FXY', 4: 'FXY'},
  'UnderlyingPrice': {0: 72.4399, 1: 88.73, 2: 72.4399, 3: 88.73, 4: 88.73},
@@ -44,4 +69,12 @@ df_gb_agg_clean.columns = [x.replace(', ', '_').replace('(', '').replace(')', ''
 
 print("Here is the clean groupby-agg sample.")
 print(df_gb_agg_clean)
+print()
+
+df_gb_agg_version2 = df_flatten_rawcols.copy()
+df_gb_agg_version2 = cleanup_df_cols(df_gb_agg_version2)
+
+
+print("Here is the version2 sample.")
+print(df_gb_agg_version2)
 print()
