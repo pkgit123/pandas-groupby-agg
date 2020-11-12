@@ -1,28 +1,46 @@
 import pandas as pd
 
-
-def cleanup_df_cols(df):
+def gb_agg_df(df, gb_key, di_gb_agg):
     '''
-    Cleanup the columns in dataframe.
+    Run .groupby().agg() based on key and a dictionary of aggregations.
     
-    Dataframe => .groupby().agg() => .to_records() -> pd.DataFrame()
+    Inputs:
+        df - dataframe, input
+        gb_key - str, dataframe column as groupby key
+        di_gb_agg - dict, keys are columns to aggregate, values are list of aggregation functions
     
-    Cleanup:
+    Example di_gb_agg:
+    {
+        'col1', [length, np.sum]
+    }
+    
+    Cleanup columns:
      * Replace ', '  =>  '_'
      * Remove '('
      * Remove ')'
      * Remove ','
     '''
-    # save the original columns in dataframe to temporary list
-    ls_original_cols = df.columns
     
-    # cleanup the column names
+    # step 1: create raw .groupby().agg() dataframe ... problem is multi-index columns
+    df_raw_gb_agg = df.groupby(gb_key).agg(di_gb_agg)
+    
+    # step 2: convert to numpy records ... flatten columns
+    np_rec_gb_agg = df_raw_gb_agg.to_records()
+    
+    # step 3: convert numpy records to dataframe
+    df_flatten_gb_agg = pd.DataFrame(np_rec_gb_agg)
+    
+    # step 4: save original column names to list
+    ls_original_cols = df_flatten_gb_agg.columns
+    
+    # step 5: cleanup column names
     ls_cleanup_cols = [x.replace(', ', '_').replace('(', '').replace(')', '').replace("'", "") for x in ls_original_cols]
     
-    # replace columns in dataframe 
-    df.columns = ls_cleanup_cols
+    # step 6: return new dataframe with clean column names
+    df_clean_gb_agg = df_flatten_gb_agg.copy()
+    df_clean_gb_agg.columns = ls_cleanup_cols
     
-    return df
+    return df_clean_gb_agg
 
 
 # create sample data using dictionary
@@ -71,9 +89,13 @@ print("Here is the clean groupby-agg sample.")
 print(df_gb_agg_clean)
 print()
 
-df_gb_agg_version2 = df_flatten_rawcols.copy()
-df_gb_agg_version2 = cleanup_df_cols(df_gb_agg_version2)
+# create example of di_gb_agg
+di_gb_agg_example = {
+    'Strike': [len, pd.Series.nunique]
+}
 
+# create gb_agg
+df_gb_agg_version2 = gb_agg_df(df_sample, 'UnderlyingSymbol', di_gb_agg_example)
 
 print("Here is the version2 sample.")
 print(df_gb_agg_version2)
